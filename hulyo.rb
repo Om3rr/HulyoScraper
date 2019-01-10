@@ -1,7 +1,9 @@
 require 'json'
 require 'rest-client'
 require './initdb'
-API_KEY = `echo $TELEGRAM_API`
+require './secrets'
+
+
 USERNAME = "Omertesttbot"
 CHAT_ID = "@hshshshsjs"
 
@@ -34,6 +36,11 @@ def sendable_flight(flight)
 	"#{flight['DealDestinationName']} - #{flight['FlightsDatesText']} - #{flight['PriceTitle']}"
 end
 
+def priceDrop(oldFlight, newFilght)
+	"#{oldFlight['DealDestinationName']} - #{oldFlight['FlightsDatesText']} - #{newFilght['PriceTitle']} (#{oldFlight['PriceTitle']})"
+end
+
+
 def good_flights(flights)
 	flights.select do |flight|
 		next false if PRICES[flight['DealDestinationCode'].to_sym].nil?
@@ -45,13 +52,23 @@ def save_flights(flights)
 	a = File.open('flights.json', 'w')
 	a.write JSON.dump(flights.map{|f| f['id']})
 end
-
+pdrops = []
 flights = get_flights
 dber = Dber.new
 flights.each do |f|
-	dber.insertFlight(f)
+	pdrop = dber.insertFlight(f)
+  unless pdrop.nil?
+    p "PRICE DROP"
+    pdrops << [pdrop, f]
+  end
 end
 new_flights = dber.sendFlights
-new_flights += dber.pdrop
 new_flights.each_slice(5).map{|x| tn(x.map{|y| sendable_flight(JSON.parse(y[0]))}.join("\n"))}
 dber.commitFlights
+pdrops.each_slice(5) do |chunk|
+  msg = chunk.map do |flight|
+    oldF, newF = flight
+		priceDrop(oldF, newF)
+  end.join("\n")
+  tn(msg)
+end

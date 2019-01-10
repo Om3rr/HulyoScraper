@@ -16,21 +16,15 @@ class Dber
 	
 
 	def insertFlight(flight)
-	p @db.execute("SELECT *
- from flights where id = ? AND price - 100 > ?", [flight['Id'], flight['PriceInShekel']])
-	p flight
-p " -----------------------------------"
-p " -----------------------------------"
-p " -----------------------------------"
-p " -----------------------------------"
-p " -----------------------------------"
-p " -----------------------------------"
-p " -----------------------------------"
-p " -----------------------------------"
-
+		raw = nil
+	pdrop = @db.execute("SELECT 1 from flights where id = ? AND price - 100 > ?", [flight['Id'], flight['PriceInShekel']]).flatten
 	a = flight["FlightsDatesText"].split(' - ')[0]
 	b = flight["FlightsDatesText"].split(' - ')[1]
-	@db.execute("UPDATE flights set price = ? where id = ?", [flight['Id'], flight['PriceInShekel']])
+	if pdrop.length > 0
+		raw = @db.execute("SELECT raw FROM flights WHERE id = ?", flight['Id']).flatten.first
+		raw = JSON.parse(raw)
+	end
+	@db.execute("UPDATE flights set price = ? where id = ?", [flight['PriceInShekel'], flight['Id']])
 	@db.execute("INSERT OR IGNORE INTO flights (id, price, dest, hdest, raw, from_date, to_date) 
             VALUES (?, ?, ?, ?, ?, ?, ?)", 
 			[
@@ -42,7 +36,8 @@ p " -----------------------------------"
 				a,
 				b
 			]
-			) 
+			)
+		raw
 	end
 	
 	
