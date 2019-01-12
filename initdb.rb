@@ -17,7 +17,7 @@ class Dber
 
 	def insertFlight(flight)
 		raw = nil
-	pdrop = @db.execute("SELECT 1 from flights where id = ? AND price - 100 > ?", [flight['Id'], flight['PriceInShekel']]).flatten
+	pdrop = @db.execute("SELECT 1 from flights where id = ? AND price - 20 > ?", [flight['Id'], flight['PriceInShekel']]).flatten
 	a = flight["FlightsDatesText"].split(' - ')[0]
 	b = flight["FlightsDatesText"].split(' - ')[1]
 	if pdrop.length > 0
